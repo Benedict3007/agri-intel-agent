@@ -1,6 +1,6 @@
 # --- Project-Specific Ignores ---
 # Ignore the Chroma vector database
-data/chroma
+data/chroma/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
