@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,6 +7,7 @@ import matplotlib.dates as mdates
 import os
 from datetime import datetime
 from langchain.tools import tool
+from pathlib import Path
 
 # --- Define a browser-like header ---
 HEADERS = {
@@ -12,7 +15,8 @@ HEADERS = {
 }
 
 # Output dir for charts
-CHARTS_DIR = os.path.join("..", "..", "data", "charts")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CHARTS_DIR = PROJECT_ROOT / "data" / "charts"
 os.makedirs(CHARTS_DIR, exist_ok=True)
 
 def _fetch_and_process_data(product_name: str, member_state_code: str=None) -> pd.DataFrame:
@@ -72,6 +76,7 @@ def get_crop_price_data(product_name: str, member_state_code: str=None) -> str:
 def plot_crop_price_chart(product_name: str, member_state_code: str=None) -> str:
     """
     Generates a plot of historical prices for a specific crop, optionally filtered by country.
+    Use this when a user asks for a 'chart', 'plot', or 'graph'.
     Args:
         product_name (str): The name of the crop (e.g., 'Feed Wheat')
         member_state_code (str, optional): The 2-letter country code (e.g., 'DE')
@@ -98,10 +103,13 @@ def plot_crop_price_chart(product_name: str, member_state_code: str=None) -> str
         plt.tight_layout()
 
         chart_filename = f"{product_name.replace(' ', '_')}_{member_state_code or 'EU'}_chart.png"
-        chart_path = os.path.join(CHARTS_DIR, chart_filename)
+        chart_path = CHARTS_DIR / chart_filename
         plt.savefig(chart_path)
         plt.close(fig)
 
-        return f"Successfully generated chart and saved to '{chart_path}'."
+        print(f"Chart saved to {chart_path}")
+
+        return f"Chart generated. You can view it at /charts/{chart_filename}"
+
     except Exception as e:
         return f"An error occurred: {e}"

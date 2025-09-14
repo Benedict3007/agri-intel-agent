@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
 
@@ -12,7 +13,9 @@ from langchain.tools.retriever import create_retriever_tool
 from src.agent.tools import get_crop_price_data, plot_crop_price_chart
 
 # CONSTANTS
-CHROMA_PATH = os.path.join("..", "..", "data", "chroma")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+CHROMA_PATH = os.path.join(PROJECT_ROOT, "data", "chroma")
+CHARTS_DIR = os.path.join(PROJECT_ROOT, "data", "charts")
 EMBEDDING_MODEL = "BAAI/bge-large-en-v1.5"
 OLLAMA_MODEL = "llama3.1:8b-instruct-q4_K_M"
 
@@ -22,6 +25,7 @@ class Query(BaseModel):
 
 # --- Initialize FastAPI App ---
 app = FastAPI()
+app.mount("/charts", StaticFiles(directory=CHARTS_DIR), name="charts")
 
 # --- Load Models and Vector Store on Startup --- 
 print("Loading vector store and models...")
@@ -48,7 +52,12 @@ tools = [retriever_tool] + price_tools
 # --- Agent-Prompt creation ---
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are an intelligent assistent for the agricultural market. Use available tools to answer the users questions in the best way possible."),
+        (
+            "system",
+            "You are an intelligent assistant for the agricultural market. Use available tools to answer the users questions."
+            " IMPORTANT: When you use the 'plot_crop_price_chart' tool, you MUST include the exact chart path (e.g., '/charts/chart_name.png') "
+            "it returns in your final answer. The user interface relies on this path to display the image."
+        ),
         ("user", "{input}"),
         ("placeholder", "{agent_scratchpad}")
     ]

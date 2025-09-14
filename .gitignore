@@ -1,6 +1,10 @@
 # --- Project-Specific Ignores ---
 # Ignore the Chroma vector database
 data/chroma/
+data/charts/
+
+.DS_Store
+src/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

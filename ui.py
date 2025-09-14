@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import json
+import os
+import re
 
 # --- Configuration ---
 API_URL ="http://127.0.0.1:8000/query"
@@ -18,6 +20,8 @@ if 'history' not in st.session_state:
 for chat in st.session_state.history:
     with st.chat_message(chat["role"]):
         st.markdown(chat["content"])
+        if chat.get("image_path"):
+            st.image(chat["image_path"])
 
 # User input
 if prompt := st.chat_input("What are the wheat production forecasts?"):
@@ -39,9 +43,23 @@ if prompt := st.chat_input("What are the wheat production forecasts?"):
             result = response.json()
             answer = result.get("response", "Sorry, I couldn't get a response.")
 
-            # Add agent response to history and display it
-            st.session_state.history.append({"role": "assistant", "content": answer})
+            image_url = None
+            match = re.search(r'(/charts/[a-zA-Z0-9/\\_.-]+\.png)', answer)
+
+            if match:
+                image_path_segment = match.group(1)
+                base_api_url = API_URL.rsplit('/', 1)[0]
+                image_url = f"{base_api_url}{image_path_segment}"
+
+            assistant_respone = {"role": "assistant", "content": answer}
+            if image_url:
+                assistant_respone["image_path"] = image_url 
+            st.session_state.history.append(assistant_respone)
+
             with st.chat_message("assistant"):
                 st.markdown(answer)
+                if image_url:
+                    st.image(image_url)
+
         except requests.exceptions.RequestException as e:
             st.error(f"Could not connect to the API. Make sure it's running. Error: {e}")
